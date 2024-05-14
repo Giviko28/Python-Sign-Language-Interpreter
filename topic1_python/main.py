@@ -1,7 +1,7 @@
 from book import Book
 from library import Library
 from customer import Customer
-
+from calculator import Calculator
 
 
 customer1 = Customer("Givi", 15)
@@ -20,6 +20,9 @@ library.RegisterCustomer(customer1)
 library.RegisterCustomer(customer2)
 library.RegisterCustomer(customer3)
 
+calc = Calculator()
+
+print(calc.Add(1, 2))
 
 library.customers[0].Borrow(library.books[1], library.customers)
 
