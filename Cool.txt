@@ -1,2 +1,5 @@
+<<<<<<< HEAD
 Cool
 Cool - Givi push testc
+=======
+>>>>>>> e6246d7 (Lab2)
