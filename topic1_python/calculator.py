@@ -1,7 +1,6 @@
 class Calculator:
     def __init__(self) -> None:
         pass
-
     def Add(self, num1, num2):
         return num1+num2
     def Subtract(self, num1, num2):
