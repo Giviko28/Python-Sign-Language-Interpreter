@@ -1,9 +1,3 @@
-<<<<<<< HEAD
-Cool
-Cool - Givi push testc
-*yyvfuyavz
-=======
->>>>>>> e6246d7 (Lab2)
 get all the data
 git clone https://....
 
