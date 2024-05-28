@@ -118,7 +118,7 @@ def highest_revenue_popularity_lte_1():
 if __name__ == '__main__':
     print("Highest profit movie:", highest_profit_movie())
     print("---------------------------------------------")
-    print("Highest loss movie:", highest_loss_movie)
+    print("Highest loss movie:", highest_loss_movie())
     print("---------------------------------------------")
     print("Actor with the longest name:", actor_longest_name())
     print("---------------------------------------------")
