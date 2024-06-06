@@ -11,7 +11,10 @@ if __name__ == '__main__':
             ?movie a :Movie;
                 :budget ?budget;
                 :title ?title.
-        }'''
+        }
+        ORDER BY ASC(?budget)
+        LIMIT 1
+        '''
     query_result = g.query(query_d)
 
     ##for row in query_result:

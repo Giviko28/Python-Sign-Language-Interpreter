@@ -11,7 +11,10 @@ if __name__ == '__main__':
             ?movie a :Movie;
                 :revenue ?revenue;
                 :title ?title.
-        }'''
+        }
+        ORDER BY DESC(?revenue)
+        LIMIT 1
+        '''
     query_result = g.query(query_d)
 
     ##for row in query_result:

@@ -1,7 +1,7 @@
 import rdflib
 
 if __name__ == '__main__':
-    path_to_graph = "TMDB.ttl"
+    path_to_graph = "iai_mauchamp_chelidze/topic2_Knowledge_Representation/exercice_6/TMDB.ttl"
     g = rdflib.Graph()
     g.parse(path_to_graph, format='turtle')
 
@@ -28,7 +28,7 @@ if __name__ == '__main__':
                     :name 'julius caesar'.
             }
     '''
-    query_result = g.query(query_a)
+    query_result = g.query(query_b)
 
         ##for row in query_result:
         ##print(row)
