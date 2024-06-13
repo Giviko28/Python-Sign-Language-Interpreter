@@ -21,6 +21,7 @@ def replace_letters_with_paths(sentences, image_paths_dict = get_images_dict()):
         updated_sentences.append(updated_sentence)
     return updated_sentences
 
+# sentence is an array of letter paths ("hi" -> ["/images/h.png", "/images/i.png"])
 def display_sentence(sentence):
     for element in sentence:
         img = cv2.imread(element)
