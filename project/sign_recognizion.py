@@ -69,7 +69,7 @@ def main():
     
 
         pred_probab, pred_class = keras_predict(model, im5)
-    
+        print(pred_class)
         curr = prediction(pred_class)
         print(curr)
 
