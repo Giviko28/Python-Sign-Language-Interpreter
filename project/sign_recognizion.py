@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import keras
+from helper import *
 #from keras.models import load_model
 from tensorflow import keras
 from skimage.transform import resize, pyramid_reduce
@@ -9,6 +10,10 @@ import os
 from PIL import Image
 from time import sleep
 print(os.path.isfile('model.keras'))
+print(os.getcwd())
+
+
+
 model = keras.models.load_model('model.keras')
 
 
@@ -37,10 +42,13 @@ def crop_image(image, x, y, width, height):
 
 def main():
     l = []
-    
+    cam_capture = cv2.VideoCapture(0)    
+    sentence = "Iello".upper()
+    letter = 0
+    sentence_to_image = replace_letters_with_paths([sentence, "boink"])[0]
+
+
     while True:
-        
-        cam_capture = cv2.VideoCapture(0)
         _, image_frame = cam_capture.read()  
     # Select ROI
         im2 = crop_image(image_frame, 300,300,300,300)
@@ -53,34 +61,46 @@ def main():
     
         im4 = np.resize(im3, (28, 28, 1))
         im5 = np.expand_dims(im4, axis=0)
+
+        img = cv2.imread(sentence_to_image[letter])
+        if img is not None:
+            cv2.imshow("letter", img)
+
     
 
         pred_probab, pred_class = keras_predict(model, im5)
     
         curr = prediction(pred_class)
         print(curr)
+
+
         
         cv2.putText(image_frame, curr, (700, 300), cv2.FONT_HERSHEY_COMPLEX, 4.0, (255, 255, 255), lineType=cv2.LINE_AA)
+        
+        
             
-            
-    
+        
  
     # Display cropped image
         cv2.rectangle(image_frame, (300, 300), (600, 600), (255, 255, 00), 3)
         cv2.imshow("frame",image_frame)
         
         
-    #cv2.imshow("Image4",resized_img)
+        # cv2.imshow("Image4",resized_img)
+
         cv2.imshow("Image3",image_grayscale_blurred)
 
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-                cv2.destroyAllWindows()
-                break
-        sleep(5)
+             
 
+        if cv2.waitKey(0) & 0xFF == ord('q') or letter > len(sentence):
+                break
+
+        if (curr == sentence[letter]):
+             letter += 1
+        else:
+            continue
 
 
 if __name__ == '__main__':
     main()
-    cam_capture.release()
     cv2.destroyAllWindows()

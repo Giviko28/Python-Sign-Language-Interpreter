@@ -9,9 +9,7 @@ sentences = [
     "come on heinrichs"
 ]
 
-sentences_to_images = replace_letters_with_paths(sentences)
 
-
-display_sentence(sentences_to_images[0])
+display_sentence(sentences[0])
 
 
