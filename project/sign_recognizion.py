@@ -14,7 +14,7 @@ print(os.getcwd())
 
 
 
-model = keras.models.load_model('model.keras')
+model = keras.models.load_model('project/model.keras')
 
 
 def prediction(pred):
