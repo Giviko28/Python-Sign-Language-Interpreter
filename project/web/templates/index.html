@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Display Webcam Stream</title>
+    <style>
+        #container {
+            margin: 0px auto;
+            width: 1000px;
+            border: 10px #333 solid;
+            display: flex;
+            gap: 3rem;
+            flex-direction:column;
+        }
+        .video-wrapper {
+            display: flex;
+            gap: 3rem;
+            max-height: 375px;
+        }
+        .video-helper {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+        }
+        .video-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            grid-column: span 2;
+            gap: 0.5rem;
+            padding: 0 0.5rem;;
+        }
+        .video-panel label {
+            font-weight: 700;
+            color: #333333;
+            font-size: 1rem;
+        }
+        .video-panel input {
+        }
+        #videoElement {
+            width: 500px;
+            height: 375px;
+            background-color: #666;
+        }
+        .api-results-div{
+            overflow-y: auto;
+        }
+        .result-span {
+            display: block;
+            margin-top: 5px;
+            padding: 5px;
+            border: 1px solid #ddd;
+        }
+        .capture-btn, .start-btn, .skip-btn {
+            padding: 0.5rem;
+            min-width: 110px !important;
+            background: none;
+            font-weight: 700;
+            margin: 1.5rem 0;
+            transition-duration: 0.3s;
+            cursor: pointer;
+            border: 1px solid black;
+            text-align: center;
+        }
+        .capture-btn:hover, .start-btn:hover,  .skip-btn:hover {
+            background: black;
+            color: white;
+            border: 1px solid white;
+        }
+        .letter, .gesture {
+            width: 150px;
+            height: 150px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div class="video-wrapper">
+            <video autoplay="true" id="videoElement"></video>
+            <div>
+                <button class="capture-btn" id="captureButton">Capture Image</button>
+            </div>
+            
+            <div class="api-results-div">
+                Result: <p id="api-result"></p>
+            </div>
+        </div>
+        <div class="video-helper">
+            <div class="video-panel">
+                <label for="game-text">Enter a sentence/word to start the game</label>
+                <input class="game-text" type="text">
+                <div class="panel-btns">
+                    <button class="start-btn">Start</button>
+                    <button class="skip-btn">Skip Letter</button>
+                </div>       
+                <p class="result"></p>
+            </div>
+            <div> 
+                <img class="letter" alt="Letter">
+            </div>
+            <div> 
+                <img class="gesture" alt="gesture">
+            </div>
+        </div>  
+    </div>
+    <script>
+        let video = document.querySelector("#videoElement");
+        let resultElement = document.querySelector("#api-result");
+        if (navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ video: true })
+            .then(function (stream) {
+                video.srcObject = stream;
+            })
+            .catch(function (error) {
+                console.log("Something went wrong!");
+            });
+        }
+
+        let letterImage = document.querySelector(".letter");
+        let gestureImage = document.querySelector(".gesture");
+        let startBtn = document.querySelector(".start-btn");
+        let skipBtn = document.querySelector(".skip-btn");
+        let gameText = document.querySelector(".game-text");
+        let resultParagraph = document.querySelector(".result");
+        let hasGameStarted = false;
+        let letters = "";
+        let i = 0;
+        function displayLetter(letter) {
+            letterImage.src = '/static/images/letters/' + letter.toUpperCase()  + '.png';
+            gestureImage.src = '/static/images/gestures/' + letter.toUpperCase()  + '.png';
+            letterImage.style.display = "block";
+            gestureImage.style.display = "block";
+        }
+
+
+        function endGame() {
+            resultParagraph.innerHTML = "Du bist fertig, soo super! (kill me please)";
+            letterImage.src = ""
+            gestureImage.src = ""
+            letterImage.style.display = "none";
+            gestureImage.style.display = "none";
+            gameText.value = "";
+            hasGameStarted = false;
+        }
+
+        startBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            i = 0;
+            letters = gameText.value.split(" ").filter(word => word.trim() !== "").join("").toUpperCase();
+            if (letters.length > 0) {
+                displayLetter(letters[i])
+                resultParagraph.innerHTML = "";
+                hasGameStarted = true;
+            }
+        })
+
+        skipBtn.addEventListener("click", () => {
+            if (!hasGameStarted)
+                return;
+            if (i+1 < letters.length){
+                i++;
+                displayLetter(letters[i]);
+            }
+            else if (i+1 == letters.length)
+                endGame();
+        })
+
+        document.getElementById("captureButton").addEventListener("click", function() {
+            var canvas = document.createElement("canvas");
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            var context = canvas.getContext("2d");
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            var dataURL = canvas.toDataURL("image/png");
+
+            fetch("/process_image", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ image: dataURL })
+            })
+            .then(response => response.json())
+            .then(data => {
+                resultElement.innerHTML = ""; 
+                let result = data.result;
+                if (typeof result === "object" && result !== null) {
+                    for (let key in result) {
+                        if (result.hasOwnProperty(key)) {
+                            let span = document.createElement("span");
+                            span.className = "result-span";
+                            span.innerHTML = key + ": " + result[key];
+                            resultElement.appendChild(span);
+                        }
+                    }
+                } else {
+                    let span = document.createElement("span");
+                    span.className = "resul-span";
+                    span.innerText = "Result: " + result;
+                    resultElement.appendChild(span);
+                }
+                
+                // the best predicted one
+                let predictedChar = result["Predicted Character 1"]
+                if (predictedChar && predictedChar == letters[i]) {
+                    if (++i < letters.length) {
+                        console.log(i);
+                        console.log(letters.length);
+                        displayLetter(letters[i])
+                    } else {
+                        endGame()
+                    }
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                let span = document.createElement("span");
+                span.className = "result-span";
+                span.innerText = "Error: " + error;
+                resultElement.appendChild(span);
+            });
+        });
+    </script>
+</body>
+</html>
+
