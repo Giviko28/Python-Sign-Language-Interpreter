@@ -72,10 +72,35 @@
             height: 150px;
             display: none;
         }
+        .game-end {
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            animation-name: slideDown;
+            animation-duration: 4s;
+            animation-timing-function: ease-out;
+            position: relative;
+            top: 50%;
+            display: none;
+        }
+
+    @keyframes slideDown {
+        0% {
+            transform: translateY(-100%);
+            opacity: 0;
+        }
+        100% {
+            transform: translateY(0%);
+            opacity: 1;
+        }
+    }
     </style>
 </head>
 <body>
-    <div id="container">
+    <audio id="music">
+        <source src="/static/audios/titouan.mp3" type="audio/mpeg">
+    </audio>
+    <div class="container" id="container">
         <div class="video-wrapper">
             <video autoplay="true" id="videoElement"></video>
             <div>
@@ -104,8 +129,15 @@
             </div>
         </div>  
     </div>
+    <div class="game-end">
+        <img src="/static/images/thumbsup.jpg" alt="thumbs up">
+        <h1>SEHR GUT MEINE LIEBE</h1>
+    </div>
     <script>
+        let container = document.querySelector(".container");
+        let gameEndDiv = document.querySelector(".game-end");
         let video = document.querySelector("#videoElement");
+        let music = document.querySelector("#music");
         let resultElement = document.querySelector("#api-result");
         if (navigator.mediaDevices.getUserMedia) {
             navigator.mediaDevices.getUserMedia({ video: true })
@@ -142,6 +174,14 @@
             gestureImage.style.display = "none";
             gameText.value = "";
             hasGameStarted = false;
+            container.style.display = "none";
+            gameEndDiv.style.display = "flex";
+            music.play();
+            setTimeout(() => {
+                gameEndDiv.style.display = "none";
+                container.style.display = "flex";
+                music.stop();
+            }, 7000)
         }
 
         startBtn.addEventListener("click", (e) => {
