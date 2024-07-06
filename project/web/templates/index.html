@@ -36,7 +36,7 @@
         }
         .video-panel input {
         }
-        #videoElement {
+        .video-element {
             width: 500px;
             height: 375px;
             background-color: #666;
@@ -97,18 +97,18 @@
     </style>
 </head>
 <body>
-    <audio id="music">
+    <audio class="music">
         <source src="/static/audios/titouan.mp3" type="audio/mpeg">
     </audio>
     <div class="container" id="container">
         <div class="video-wrapper">
-            <video autoplay="true" id="videoElement"></video>
+            <video autoplay="true" class="video-element"></video>
             <div>
-                <button class="capture-btn" id="captureButton">Capture Image</button>
+                <button class="capture-btn">Capture Image</button>
             </div>
             
             <div class="api-results-div">
-                Result: <p id="api-result"></p>
+                Result: <p class="api-result"></p>
             </div>
         </div>
         <div class="video-helper">
@@ -118,6 +118,8 @@
                 <div class="panel-btns">
                     <button class="start-btn">Start</button>
                     <button class="skip-btn">Skip Letter</button>
+                    <label for="hide-hints">Hide hints</label>
+                    <input class="hide-hints" type="checkbox" />
                 </div>       
                 <p class="result"></p>
             </div>
@@ -136,9 +138,10 @@
     <script>
         let container = document.querySelector(".container");
         let gameEndDiv = document.querySelector(".game-end");
-        let video = document.querySelector("#videoElement");
-        let music = document.querySelector("#music");
-        let resultElement = document.querySelector("#api-result");
+        let video = document.querySelector(".video-element");
+        let music = document.querySelector(".music");
+        let captureBtn = document.querySelector(".capture-btn");
+        let resultElement = document.querySelector(".api-result");
         if (navigator.mediaDevices.getUserMedia) {
             navigator.mediaDevices.getUserMedia({ video: true })
             .then(function (stream) {
@@ -155,16 +158,78 @@
         let skipBtn = document.querySelector(".skip-btn");
         let gameText = document.querySelector(".game-text");
         let resultParagraph = document.querySelector(".result");
+        let hideHintsCheckbox = document.querySelector(".hide-hints");
         let hasGameStarted = false;
         let letters = "";
         let i = 0;
+
+        async function SendImageToApi() {
+            try {
+                var canvas = document.createElement("canvas");
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                var context = canvas.getContext("2d");
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                var dataURL = canvas.toDataURL("image/png");
+
+                let response = await fetch("/process_image", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ image: dataURL })
+                });
+
+                let data = await response.json();
+
+                resultElement.innerHTML = ""; 
+                let result = data.result;
+                console.log(result);
+
+                if (typeof result === "object" && result !== null) {
+                    for (let key in result) {
+                        if (result.hasOwnProperty(key)) {
+                            let span = document.createElement("span");
+                            span.className = "result-span";
+                            span.innerHTML = key + ": " + result[key];
+                            resultElement.appendChild(span);
+                        }
+                    }
+                } else {
+                    let span = document.createElement("span");
+                    span.className = "result-span";
+                    span.innerText = "Result: " + result;
+                    resultElement.appendChild(span);
+                }
+
+                return result["Predicted Character 1"];
+            } catch (error) {
+                console.error("Error:", error);
+                let span = document.createElement("span");
+                span.className = "result-span";
+                span.innerText = "Error: " + error;
+                resultElement.appendChild(span);
+                return null;
+            }
+        }
+
         function displayLetter(letter) {
             letterImage.src = '/static/images/letters/' + letter.toUpperCase()  + '.png';
             gestureImage.src = '/static/images/gestures/' + letter.toUpperCase()  + '.png';
-            letterImage.style.display = "block";
-            gestureImage.style.display = "block";
+            displayHints();
         }
 
+        function displayHints() {
+            if (!hasGameStarted) 
+                return;
+            if (hideHintsCheckbox.checked) {
+                letterImage.style.display = "none";
+                gestureImage.style.display = "none";
+            } else {
+                letterImage.style.display = "block";
+                gestureImage.style.display = "block";
+            }
+        }
 
         function endGame() {
             resultParagraph.innerHTML = "Du bist fertig, soo super! (kill me please)";
@@ -189,9 +254,9 @@
             i = 0;
             letters = gameText.value.split(" ").filter(word => word.trim() !== "").join("").toUpperCase();
             if (letters.length > 0) {
+                hasGameStarted = true;
                 displayLetter(letters[i])
                 resultParagraph.innerHTML = "";
-                hasGameStarted = true;
             }
         })
 
@@ -206,44 +271,12 @@
                 endGame();
         })
 
-        document.getElementById("captureButton").addEventListener("click", function() {
-            var canvas = document.createElement("canvas");
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            var context = canvas.getContext("2d");
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            var dataURL = canvas.toDataURL("image/png");
+        hideHintsCheckbox.addEventListener("change", displayHints)
 
-            fetch("/process_image", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ image: dataURL })
-            })
-            .then(response => response.json())
-            .then(data => {
-                resultElement.innerHTML = ""; 
-                let result = data.result;
-                if (typeof result === "object" && result !== null) {
-                    for (let key in result) {
-                        if (result.hasOwnProperty(key)) {
-                            let span = document.createElement("span");
-                            span.className = "result-span";
-                            span.innerHTML = key + ": " + result[key];
-                            resultElement.appendChild(span);
-                        }
-                    }
-                } else {
-                    let span = document.createElement("span");
-                    span.className = "resul-span";
-                    span.innerText = "Result: " + result;
-                    resultElement.appendChild(span);
-                }
-                
-                // the best predicted one
-                let predictedChar = result["Predicted Character 1"]
-                if (predictedChar && predictedChar == letters[i]) {
+
+        captureBtn.addEventListener("click", async function() {
+            let predictedChar = await SendImageToApi();
+            if (predictedChar && predictedChar == letters[i]) {
                     if (++i < letters.length) {
                         console.log(i);
                         console.log(letters.length);
@@ -252,15 +285,7 @@
                         endGame()
                     }
                 }
-            })
-            .catch(error => {
-                console.error("Error:", error);
-                let span = document.createElement("span");
-                span.className = "result-span";
-                span.innerText = "Error: " + error;
-                resultElement.appendChild(span);
             });
-        });
     </script>
 </body>
 </html>
