@@ -162,6 +162,15 @@
         let hasGameStarted = false;
         let letters = "";
         let i = 0;
+        
+        function normalize_input(text){
+            text = text.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            if (!((/^[a-zA-Z]+$/).test(text))){
+                text.replace(/[^a-zA-Z]/g, "");
+                alert("pls no xss attack !");
+            }
+            return text
+        }
 
         async function SendImageToApi() {
             try {
@@ -171,7 +180,7 @@
                 var context = canvas.getContext("2d");
                 context.drawImage(video, 0, 0, canvas.width, canvas.height);
                 var dataURL = canvas.toDataURL("image/png");
-
+                
                 let response = await fetch("/process_image", {
                     method: "POST",
                     headers: {
@@ -253,6 +262,7 @@
             e.preventDefault();
             i = 0;
             letters = gameText.value.split(" ").filter(word => word.trim() !== "").join("").toUpperCase();
+            letters = normalize_input(letters);
             if (letters.length > 0) {
                 hasGameStarted = true;
                 displayLetter(letters[i])
