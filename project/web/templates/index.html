@@ -166,10 +166,9 @@
         function normalize_input(text){
             text = text.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             if (!((/^[a-zA-Z]+$/).test(text))){
-                text.replace(/[^a-zA-Z]/g, "");
-                alert("pls no xss attack !");
+                alert("pls no xss attack ! (or other character such as '/ -: _...)");
             }
-            return text
+            return text.replace(/[^a-zA-Z]/g, "");
         }
 
         async function SendImageToApi() {
